@@ -1,0 +1,217 @@
+---
+title: "Códigos do Amanhã EDA Project"
+format: html
+execute:
+  echo: false
+---
+
+# Student: Thayssa Daniele
+[GitHub](https://github.com/thayssaromao)
+
+[Linkedin](https://www.linkedin.com/in/thayssa-rom%C3%A3o/)
+
+## Exploratory Data Analysis
+
+- The base used for analysis was made available by Professor Rafael Roberto.
+- Available at: [data](https://raw.githubusercontent.com/rafaelrdias/DS_Examples/refs/heads/main/Arquivos/Plano_de_Saude.csv)
+
+
+## Concepts explored
+
+- Linear Correlation.
+- Boxplot.
+- Use of libraries and functionalities for analysis.
+- Linear Regression.
+- Model Adjustment - R².
+- Data Storytelling.
+
+# Libraries Used
+```{python}
+#| echo: True
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import statsmodels.formula.api as sm
+```
+
+```{python}
+#| output: FALSE
+
+# lendo o arquivo com as colunas: "Idade"(int), "Genero_Biologico"(int), "Indice_Massa_Corporal"(float), "Filhos"(int), "Fumante"(int), "Regiao"(string), "Valor_Pago_PS"(int)
+data = pd.read_csv('https://raw.githubusercontent.com/rafaelrdias/DS_Examples/refs/heads/main/Arquivos/Plano_de_Saude.csv')
+
+
+#DUVIDA: Posso trabalhar com tipagens diferentes ? Ou preciso transformar a coluna tipo string para numérica? uma forma de resolver seria usar o Label Encoding ?
+data = pd.DataFrame(data)
+
+print(data)
+```
+
+
+
+## Correlation of Variables
+My first dataset had a column with informations type string, For my analysis I decided to remove this column and apply the correlation function only to my new dataset called "data_limpa" with numeric variables. RESULTING:
+```{python}
+# Criei uma nova variável para receber um dataframe excluindo a coluna "Regiao" para conseguir fazer a correlação entre as variáveis numéricas.
+data_limpa = data[['Idade', 'Genero_Biologico', 'Indice_Massa_Corporal', 'Filhos', 'Fumante', 'Valor_Pago_PS']]
+correlacao = data_limpa.corr()
+correlacao
+
+```
+
+It's visible when we make a comparative of correlation between all variables,that our strongest correlation is between 'Indice_Massa_Corporal', 'Fumante', 'Valor_Pago_PS' an 'Idade'.
+```{python}
+corr2 = data[['Indice_Massa_Corporal', 'Fumante', 'Valor_Pago_PS', 'Idade']]
+corr2 = corr2.corr()
+corr2
+
+```
+
+## HEATMAP
+Visual representation of correlation with every variable of my new dataset "data_limpa" in percent. 
+
+```{python}
+sns.heatmap(correlacao,annot=True, cmap=sns.diverging_palette(123, 17, as_cmap=True), linewidth=.5, fmt=".0%")
+
+# correlaçao em porcentagem
+```
+
+
+```{python}
+#| output: FALSE
+
+# PAIRPLOT
+
+# apenas para entender melhor de forma visual a relaçao entre as vaiáveis usando pairplot.
+#Dúvida: funcionamento do hue em relação ao pairplot
+sns.pairplot(data, hue="Fumante")
+
+```
+
+## SCATTER CHART
+The relationship between Y = 'Indice_Massa_Corporal' and X ='Valor_Pago_PS' can be shown for different subsets of the data using the hue, it was choose differentiate this subset using variable 'Fumante'
+
+```{python}
+plt.figure(figsize=(10, 10))
+sns.scatterplot(x='Valor_Pago_PS', y='Indice_Massa_Corporal', hue='Fumante', data=data_limpa)
+
+
+
+plt.title('Gráfico de Dispersão variável categórica "FUMANTE"')
+plt.xlabel('Valor_Pago_PS')
+plt.ylabel('Indice_Massa_Corporal')
+
+# Exibindo o gráfico
+plt.show()
+```
+
+
+## LINEAR REGRESSION
+ R² (R-Square) or Determinated Coeficint, is a metric that indicates how well the linear regression model fits the data. It measures the proportion of variation in the dependent variable (the variable we are trying to predict, 'Valor_Pago_PS') that can be explained by the independent variables (the explanatory variables, 'Fumante + Indice_Massa_Corporal') in the model.
+```{python}
+#é uma métrica que indica o quão bem o modelo de regressão
+#  linear ajusta os dados. Ele mede a proporção da variação na
+# variável dependente (variável que estamos tentando prever, no caso
+# a variável "Valor_Pago_PS") que pode ser explicada pelas variáveis 
+# independentes (as variáveis explicativas, "Fumante") no modelo.
+modelo1='Valor_Pago_PS~Fumante+Indice_Massa_Corporal' 
+# R-squared: 0.620 modelo1='Valor_Pago_PS~Fumante'
+#R-squared: 0.658 modelo1='Valor_Pago_PS~Fumante+Indice_Massa_Corporal  
+lm1 = sm.ols(formula=modelo1, data=data_limpa).fit()
+print(lm1.summary())
+
+```
+
+Visual Representation of linear regression between 'Valor_Pago_PS' and 'Indice_Massa_Corporal' taking a new dimension whith the attribute that distinguishes different categories, hue='Fumante'
+```{python}
+sns.lmplot(x= 'Valor_Pago_PS',y='Indice_Massa_Corporal',hue='Fumante', data= data)
+
+#Inclinação positiva (laranja): Para fumantes, à medida que o valor 
+# pago pelo plano de saúde aumenta, o IMC também tende a aumentar. 
+# A inclinação mais íngreme da linha laranja sugere que, para os 
+# fumantes, o valor pago pode estar mais correlacionado com um IMC mais alto. 
+
+
+# Inclinação quase neutra (azul): Para não fumantes, a relação 
+# entre o valor pago pelo plano de saúde e o IMC parece ser bem mais 
+# fraca, com uma linha quase reta ou com uma inclinação muito pequena.
+
+
+#Os fumantes (em laranja) tendem a pagar mais pelo plano de 
+# saúde e têm uma variação maior de IMC (há muitos casos acima de 
+# IMC 30, que é considerado sobrepeso).Linhas de regressão: O gráfico inclui 
+# linhas de tendência que mostram a relação linear entre o valor pago pelo plano de saúde e o IMC, separadamente para cada grupo (fumantes e não fumantes).
+
+```
+
+## BOXPLOT
+Distribution and Outliers. For the non-smoking group (0), there are several outliers. These are represented by the circles above the upper limit of the box. They indicate that there are non-smokers who pay much more for health insurance compared to most.
+```{python}
+plt.figure(figsize=(8, 10))
+sns.boxplot(x='Fumante', y='Valor_Pago_PS', data=data_limpa)
+
+# Exibindo o gráfico
+plt.title('Distribuição do Valor Pago pelo Plano de Saúde por Status de Fumante')
+plt.xlabel('Fumante (0 = Não, 1 = Sim)')
+plt.ylabel('Valor Pago pelo Plano de Saúde')
+plt.show()
+```
+
+The visualization of the Boxplot was not very intuitive for the user, so, in a more explanatory way, a bar/line graph was generated for better visualization. When analyzing the graph, it is observed that the age groups that spend the most on health insurance are between 41-60 years old, and it can be assumed that in this age group more medical care usually arises.
+```{python}
+# Classificar as idades em grupos
+bins = [0, 20, 30, 40, 50, 60, 70, 80]
+labels = ['0-20', '21-30', '31-40', '41-50', '51-60', '61-70', '71-80']
+data['Grupo_Idade'] = pd.cut(data['Idade'], bins=bins, labels=labels, right=False)
+
+# Agrupar os dados por grupos de idade e calcular a soma de Valor_Pago_PS e a idade média
+grouped_data = data.groupby('Grupo_Idade').agg({'Valor_Pago_PS': 'sum', 'Idade': 'mean'}).reset_index()
+
+# Configurar o estilo do seaborn
+sns.set(style="darkgrid")
+
+# Criar a figura e os eixos
+fig, ax1 = plt.subplots(figsize=(10, 6))
+
+# Criar o gráfico de barras para o valor do plano de saúde
+sns.barplot(x='Grupo_Idade', y='Valor_Pago_PS', data=grouped_data, ax=ax1, color='b', alpha=0.8)
+
+# Adicionar os valores sobre as barras
+for i in range(len(grouped_data)):
+    ax1.text(i, grouped_data['Valor_Pago_PS'][i] + 50000,  # Deslocamento para cima das barras
+             f'{grouped_data["Valor_Pago_PS"][i]:,.0f}', 
+             ha='center', color='black')
+
+# Configurar o eixo y para o gráfico de barras
+ax1.set_ylabel('Valor do Plano de Saúde', color='b')
+ax1.tick_params(axis='y', labelcolor='b')
+
+# Criar um segundo eixo y para a linha da idade
+ax2 = ax1.twinx()
+
+# Criar o gráfico de linha para a idade média
+sns.lineplot(x='Grupo_Idade', y='Idade', data=grouped_data, ax=ax2, color='r', marker='o')
+
+# Configurar o eixo y para o gráfico de linha
+ax2.set_ylabel('Idade Média', color='r')
+ax2.tick_params(axis='y', labelcolor='r')
+
+# Configurar os rótulos do eixo x
+ax1.set_xlabel('Grupo de Idade')
+
+# Adicionar título
+plt.title('Valor do Plano de Saúde e Idade Média por Grupo de Idade')
+
+# Mostrar o gráfico
+plt.show()
+
+```
+
+
+# CONCLUSION, GREETINGS
+
+First all, i want to thank my mentor that help me to get a better insight about my first analysis with python in dataset that was challenged to me and my friends who helped as external viewers.
+
+About the analysis, with all insights generated trought libraries functions used, it is observed that the age groups that spend the most on health insurance are between 41-60 years old, and it can be assumed that in this age group more medical care usually arises. categorating we can conclue that The graph suggests that smokers tend to pay higher amounts for health insurance, and there is a stronger correlation between BMI and the amount paid in this group. That is, for smokers, people with higher BMI seem to pay more.
+For non-smokers, the amount paid by the health plan seems to vary less in relation to BMI, that is, the impact of BMI on the amount paid is lower in this group, containing more outliers.
